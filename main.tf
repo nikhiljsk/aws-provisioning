@@ -251,10 +251,10 @@ resource "aws_security_group" "allow_http" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "HTTP"
+    description = "tcp"
     from_port   = 80
     to_port     = 80
-    protocol    = "HTTP"
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -276,7 +276,7 @@ resource "aws_lb" "alb_s" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.allow_http.id]
-  subnets            = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  subnets            = [aws_subnet.public_a.id, aws_subnet.public_b.id, aws_subnet.public_c.id]
 
   tags = {
     "Name" = "ALB for S1"
