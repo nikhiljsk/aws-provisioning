@@ -9,7 +9,7 @@ resource "tls_private_key" "keypair" {
 }
 
 resource "aws_key_pair" "keypair" {
-  key_name   = "keypair"
+  key_name   = "keypairname"
   public_key = tls_private_key.keypair.public_key_openssh
 }
 
@@ -251,18 +251,18 @@ resource "aws_security_group" "allow_http" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description      = "HTTP"
-    from_port        = 80
-    to_port          = 80
-    protocol         = "HTTP"
-    cidr_blocks      = ["0.0.0.0/0"]
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "HTTP"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
@@ -271,8 +271,8 @@ resource "aws_security_group" "allow_http" {
 }
 
 # Application Load Balancer
-resource "aws_lb" "alb_s1" {
-  name               = "ALB S1"
+resource "aws_lb" "alb_s" {
+  name               = "alb-s"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.allow_http.id]
@@ -285,46 +285,48 @@ resource "aws_lb" "alb_s1" {
 
 # Attach ALB to Target Group
 resource "aws_alb_listener" "alb_listen" {
-  load_balancer_arn = "${aws_alb.alb_s1.arn}"
+  load_balancer_arn = aws_lb.alb_s.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = "${aws_lb_target_group.target_s1.arn}"
+    target_group_arn = aws_lb_target_group.target_s1.arn
     type             = "forward"
   }
 }
 
 # Auto Scaling Groups
-resource "aws_launch_template" "Template Services" {
+resource "aws_launch_template" "template" {
   name_prefix   = "template"
   image_id      = "ami-033b95fb8079dc481"
   instance_type = "t2.micro"
-  key_name      = aws_key_pair.keypair.keypair
+  key_name      = aws_key_pair.keypair
 
   tags = {
     Name = "Template"
   }
 }
 
-resource "aws_autoscaling_group" "ASG S1" {
+resource "aws_autoscaling_group" "asg_s1" {
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_b.id, aws_subnet.private_c.id]
   desired_capacity    = 3
   max_size            = 6
   min_size            = 3
-  target_group_arns = ["${aws_lb_target_group.target_s1.arn}"]
+  target_group_arns   = ["${aws_lb_target_group.target_s1.arn}"]
 
   launch_template {
     id      = aws_launch_template.template.id
     version = "$Latest"
   }
-  
-  tags = {
-    Name = "ASG S1"
+
+  tag {
+    key                 = "Name"
+    value               = "ASG S1"
+    propagate_at_launch = true
   }
 }
 
-resource "aws_autoscaling_group" "ASG S2" {
+resource "aws_autoscaling_group" "asg_s2" {
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_b.id, aws_subnet.private_c.id]
   desired_capacity    = 3
   max_size            = 6
@@ -334,13 +336,15 @@ resource "aws_autoscaling_group" "ASG S2" {
     id      = aws_launch_template.template.id
     version = "$Latest"
   }
-  
-  tags = {
-    Name = "ASG S2"
+
+  tag {
+    key                 = "Name"
+    value               = "ASG S2"
+    propagate_at_launch = true
   }
 }
 
-resource "aws_autoscaling_group" "ASG S3" {
+resource "aws_autoscaling_group" "asg_s3" {
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_b.id, aws_subnet.private_c.id]
   desired_capacity    = 3
   max_size            = 6
@@ -350,13 +354,15 @@ resource "aws_autoscaling_group" "ASG S3" {
     id      = aws_launch_template.template.id
     version = "$Latest"
   }
-  
-  tags = {
-    Name = "ASG S3"
+
+  tag {
+    key                 = "Name"
+    value               = "ASG S3"
+    propagate_at_launch = true
   }
 }
 
-resource "aws_autoscaling_group" "ASG S4" {
+resource "aws_autoscaling_group" "asg_s4" {
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_b.id, aws_subnet.private_c.id]
   desired_capacity    = 3
   max_size            = 6
@@ -366,9 +372,11 @@ resource "aws_autoscaling_group" "ASG S4" {
     id      = aws_launch_template.template.id
     version = "$Latest"
   }
-  
-  tags = {
-    Name = "ASG S4"
+
+  tag {
+    key                 = "Name"
+    value               = "ASG S4"
+    propagate_at_launch = true
   }
 }
 
@@ -400,12 +408,12 @@ resource "aws_security_group" "allow_ssh_pub" {
 
 # Bastion Hosts
 resource "aws_instance" "bastion_a" {
-  ami           = "ami-033b95fb8079dc481"
+  ami                         = "ami-033b95fb8079dc481"
   associate_public_ip_address = true
-  instance_type = "t2.micro"
+  instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_a.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
-  key_name      = aws_key_pair.keypair.keypair
+  key_name                    = aws_key_pair.keypair
 
   tags = {
     Name = "Bastion Host A"
@@ -413,12 +421,12 @@ resource "aws_instance" "bastion_a" {
 }
 
 resource "aws_instance" "bastion_b" {
-  ami           = "ami-033b95fb8079dc481"
+  ami                         = "ami-033b95fb8079dc481"
   associate_public_ip_address = true
-  instance_type = "t2.micro"
+  instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_b.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
-  key_name      = aws_key_pair.keypair.keypair
+  key_name                    = aws_key_pair.keypair
 
   tags = {
     Name = "Bastion Host B"
@@ -426,12 +434,12 @@ resource "aws_instance" "bastion_b" {
 }
 
 resource "aws_instance" "bastion_c" {
-  ami           = "ami-033b95fb8079dc481"
+  ami                         = "ami-033b95fb8079dc481"
   associate_public_ip_address = true
-  instance_type = "t2.micro"
+  instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_c.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
-  key_name      = aws_key_pair.keypair.keypair
+  key_name                    = aws_key_pair.keypair
 
   tags = {
     Name = "Bastion Host C"
