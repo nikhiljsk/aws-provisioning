@@ -300,7 +300,7 @@ resource "aws_launch_template" "template" {
   name_prefix   = "template"
   image_id      = "ami-033b95fb8079dc481"
   instance_type = "t2.micro"
-  key_name      = aws_key_pair.keypair
+  key_name      = aws_key_pair.keypair.key_name
 
   tags = {
     Name = "Template"
@@ -413,7 +413,7 @@ resource "aws_instance" "bastion_a" {
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_a.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
-  key_name                    = aws_key_pair.keypair
+  key_name                    = aws_key_pair.keypair.key_name
 
   tags = {
     Name = "Bastion Host A"
@@ -426,7 +426,7 @@ resource "aws_instance" "bastion_b" {
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_b.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
-  key_name                    = aws_key_pair.keypair
+  key_name                    = aws_key_pair.keypair.key_name
 
   tags = {
     Name = "Bastion Host B"
@@ -439,7 +439,7 @@ resource "aws_instance" "bastion_c" {
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.public_c.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
-  key_name                    = aws_key_pair.keypair
+  key_name                    = aws_key_pair.keypair.key_name
 
   tags = {
     Name = "Bastion Host C"
