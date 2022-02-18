@@ -448,7 +448,7 @@ resource "aws_instance" "bastion_a" {
   
   user_data = <<-EOL
   #!/bin/bash
-  "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem" 
+  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem" 
   EOL
 
   tags = {
@@ -466,7 +466,7 @@ resource "aws_instance" "bastion_b" {
 
   user_data = <<-EOL
   #!/bin/bash
-  "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem" 
+  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem" 
   EOL
 
   tags = {
@@ -484,7 +484,7 @@ resource "aws_instance" "bastion_c" {
 
   user_data = <<-EOL
   #!/bin/bash
-  "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem" 
+  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem" 
   EOL
 
   tags = {
