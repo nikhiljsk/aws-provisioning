@@ -511,3 +511,49 @@ resource "aws_instance" "bastion_c" {
     Name = "Bastion Host C"
   }
 }
+
+# DB SG
+resource "aws_security_group" "rds" {
+  name        = "rds-security-group"
+  description = "allow inbound"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+}
+
+# DB Subnet
+resource "aws_db_subnet_group" "default" {
+  name       = "dbmain"
+  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id, aws_subnet.private_c.id]
+
+  tags = {
+    Name = "DB Subnet"
+  }
+}
+
+# DB Instance
+resource "aws_db_instance" "default" {
+  allocated_storage    = 10
+  engine               = "mysql"
+  engine_version       = "5.7"
+  identifier           = "mysqldb"
+  instance_class       = "db.t2.micro"
+  db_name                 = "mysqldb"
+  username             = "admin"
+  password             = "adminadmin"
+  skip_final_snapshot  = true
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  db_subnet_group_name = aws_db_subnet_group.default.name
+}
