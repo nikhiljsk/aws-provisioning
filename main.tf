@@ -335,6 +335,16 @@ resource "aws_security_group_rule" "sg_rule" {
   security_group_id = aws_security_group.allow_ssh_priv.id
 }
 
+# Allow HTTP
+resource "aws_security_group_rule" "sg_rule_2" {
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = [aws_vpc.main.cidr_block]
+  security_group_id = aws_security_group.allow_ssh_priv.id
+}
+
 # Auto Scaling Groups
 resource "aws_launch_template" "template" {
   name_prefix            = "template"
