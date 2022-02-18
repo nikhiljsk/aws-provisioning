@@ -11,6 +11,10 @@ resource "tls_private_key" "keypair" {
 resource "aws_key_pair" "keypair" {
   key_name   = "keypairname"
   public_key = tls_private_key.keypair.public_key_openssh
+
+  provisioner "local-exec" { # Create a "myKey.pem"
+    command = "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem"
+  }
 }
 
 # VPC
@@ -295,12 +299,39 @@ resource "aws_alb_listener" "alb_listen" {
   }
 }
 
+# SG to allow SSH to Private Subnet Instances
+resource "aws_security_group" "allow_ssh_priv" {
+  name        = "allow_ssh_priv"
+  description = "Allow SSH"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH from the bastion"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "allow_ssh_priv"
+  }
+}
+
 # Auto Scaling Groups
 resource "aws_launch_template" "template" {
   name_prefix   = "template"
   image_id      = "ami-033b95fb8079dc481"
   instance_type = "t2.micro"
   key_name      = aws_key_pair.keypair.key_name
+  vpc_security_group_ids = [aws_security_group.allow_ssh_priv.id]
 
   tags = {
     Name = "Template"
@@ -414,6 +445,11 @@ resource "aws_instance" "bastion_a" {
   subnet_id                   = aws_subnet.public_a.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
   key_name                    = aws_key_pair.keypair.key_name
+  
+  user_data = <<-EOL
+  #!/bin/bash
+  "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem" 
+  EOL
 
   tags = {
     Name = "Bastion Host A"
@@ -428,6 +464,11 @@ resource "aws_instance" "bastion_b" {
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
   key_name                    = aws_key_pair.keypair.key_name
 
+  user_data = <<-EOL
+  #!/bin/bash
+  "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem" 
+  EOL
+
   tags = {
     Name = "Bastion Host B"
   }
@@ -440,6 +481,11 @@ resource "aws_instance" "bastion_c" {
   subnet_id                   = aws_subnet.public_c.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
   key_name                    = aws_key_pair.keypair.key_name
+
+  user_data = <<-EOL
+  #!/bin/bash
+  "echo '${tls_private_key.keypair.private_key_pem}' > ./myKey.pem" 
+  EOL
 
   tags = {
     Name = "Bastion Host C"
