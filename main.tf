@@ -325,13 +325,24 @@ resource "aws_security_group" "allow_ssh_priv" {
   }
 }
 
+# Allow ping
+resource "aws_security_group_rule" "sg_rule" {
+  type              = "ingress"
+  from_port         = -1
+  to_port           = -1
+  protocol          = "icmp"
+  cidr_blocks       = [aws_vpc.main.cidr_block]
+  security_group_id = aws_security_group.allow_ssh_priv.id
+}
+
 # Auto Scaling Groups
 resource "aws_launch_template" "template" {
-  name_prefix   = "template"
-  image_id      = "ami-033b95fb8079dc481"
-  instance_type = "t2.micro"
-  key_name      = aws_key_pair.keypair.key_name
+  name_prefix            = "template"
+  image_id               = "ami-033b95fb8079dc481"
+  instance_type          = "t2.micro"
+  key_name               = aws_key_pair.keypair.key_name
   vpc_security_group_ids = [aws_security_group.allow_ssh_priv.id]
+  user_data              = filebase64("./run_http.sh")
 
   tags = {
     Name = "Template"
@@ -445,10 +456,10 @@ resource "aws_instance" "bastion_a" {
   subnet_id                   = aws_subnet.public_a.id
   vpc_security_group_ids      = [aws_security_group.allow_ssh_pub.id]
   key_name                    = aws_key_pair.keypair.key_name
-  
+
   user_data = <<-EOL
   #!/bin/bash
-  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem" 
+  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem"
   EOL
 
   tags = {
@@ -466,7 +477,7 @@ resource "aws_instance" "bastion_b" {
 
   user_data = <<-EOL
   #!/bin/bash
-  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem" 
+  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem"
   EOL
 
   tags = {
@@ -484,7 +495,7 @@ resource "aws_instance" "bastion_c" {
 
   user_data = <<-EOL
   #!/bin/bash
-  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem" 
+  "echo '${tls_private_key.keypair.private_key_pem}' > /home/ec2-user/myKey.pem"
   EOL
 
   tags = {
